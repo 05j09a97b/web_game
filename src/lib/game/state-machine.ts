@@ -1,4 +1,4 @@
-import { createDeck, dealCards, DEFAULT_CARDS_PER_PLAYER } from "./deck";
+import { createDeck, dealCards } from "./deck";
 import { checkLoseCondition, determineNextPlayer, isCardType, resolveChallenge } from "./rules";
 import { findPlayer, phaseError, validateActionVersion, validateCurrentPlayer } from "./validation";
 import type {
@@ -87,7 +87,7 @@ export function applyGameAction(
 function startGame(
   state: GameState,
   action: Extract<GameAction, { type: "start_game" }>,
-  { cardsPerPlayer = DEFAULT_CARDS_PER_PLAYER, random }: StartGameOptions,
+  { random }: StartGameOptions,
 ): GameActionResult {
   if (state.phase !== "waiting") {
     return reject(state, phaseError("waiting"));
@@ -100,20 +100,18 @@ function startGame(
   }
   if (
     state.players.length < MIN_PLAYERS ||
-    state.players.length > MAX_PLAYERS ||
-    !Number.isInteger(cardsPerPlayer) ||
-    cardsPerPlayer < 1
+    state.players.length > MAX_PLAYERS
   ) {
     return reject(state, {
       code: "game_not_startable",
-      message: "The game needs 2–8 players and a positive hand size to start.",
+      message: "The game needs between 2 and 8 players to start.",
     });
   }
 
   const deck = createDeck({ random });
   let deal;
   try {
-    deal = dealCards(state.players, deck, cardsPerPlayer);
+    deal = dealCards(state.players, deck);
   } catch (error) {
     return reject(state, {
       code: "game_not_startable",
@@ -143,7 +141,7 @@ function startGame(
     {
       type: "game_started",
       firstPlayerId: players[0].id,
-      dealtCardCount: cardsPerPlayer,
+      totalCardsDealt: deck.length,
     },
     { type: "turn_started", playerId: players[0].id, turnNumber: 1 },
   ]);

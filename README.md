@@ -73,7 +73,7 @@ npm run build
 3. The card is revealed, the server engine assigns the penalty, and the next turn begins.
 4. Four face-up cards of one type ends the game for that player.
 
-There are eight original card types and four copies of each. Four cards are dealt per player. The host starts the game after all players in the room are ready. Every action carries a game version; stale or out-of-phase actions are rejected.
+There are eight animal types and eight copies of each, for 64 cards total. The whole deck is dealt as evenly as possible; with four players, each receives 16 cards. The host starts the game after all players in the room are ready. Every action carries a game version; stale or out-of-phase actions are rejected.
 
 ## Vercel deployment
 
@@ -88,4 +88,4 @@ There are eight original card types and four copies of each. Four cards are deal
 - Rooms, ready state, server-authoritative game actions, private hands, reconnect, and lobby/game invalidation use Supabase.
 - A player who clears browser storage loses their anonymous identity; anonymous accounts cannot be recovered without adding account linking.
 - The legacy `public.cards` table remains in the initial schema, but online private snapshots are canonical and are not exposed through direct client table reads.
-- The remote migrations still need to be applied to the configured Supabase project before online play works. No database credentials are stored in this repository.
+- Apply both migrations to each Supabase project before online play works. No database credentials are stored in this repository.

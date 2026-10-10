@@ -13,6 +13,11 @@ const playerSetups: PlayerSetup[] = [
   { id: "p3", nickname: "Cam" },
 ];
 
+const fourPlayerSetups: PlayerSetup[] = [
+  ...playerSetups,
+  { id: "p4", nickname: "Dee" },
+];
+
 function run(state: GameState, action: WithoutVersion<GameAction>): GameState {
   const result = applyGameAction(state, { ...action, expectedVersion: state.version } as GameAction, {
     random: () => 0.5,
@@ -44,12 +49,39 @@ function prepareResponse(state: GameState, claim?: CardType) {
 }
 
 describe("game state machine", () => {
+  it("deals all 64 cards to four players, 16 cards each", () => {
+    const waiting = createWaitingGame(fourPlayerSetups, {
+      gameId: "four-player-game",
+      hostPlayerId: "p1",
+    });
+    const result = applyGameAction(
+      waiting,
+      { type: "start_game", playerId: "p1", expectedVersion: waiting.version },
+      { random: () => 0.5 },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const dealtCards = result.nextState.players.flatMap(({ hand }) => hand);
+    expect(result.nextState.players.map(({ hand }) => hand.length)).toEqual([16, 16, 16, 16]);
+    expect(dealtCards).toHaveLength(64);
+    expect(new Set(dealtCards.map(({ id }) => id)).size).toBe(64);
+    expect(result.nextState.drawPile).toEqual([]);
+    expect(result.events[0]).toEqual({
+      type: "game_started",
+      firstPlayerId: "p1",
+      totalCardsDealt: 64,
+    });
+  });
+
   it("deals cards at start and advances through a valid turn", () => {
     const state = startedGame();
 
     expect(state.phase).toBe("select_card");
     expect(state.currentPlayerId).toBe("p1");
-    expect(state.players.every((player) => player.hand.length === 4)).toBe(true);
+    expect(state.players.map(({ hand }) => hand.length)).toEqual([22, 21, 21]);
+    expect(state.drawPile).toEqual([]);
 
     const { state: waitingResponse, card, receiverId } = prepareResponse(state);
     expect(waitingResponse.phase).toBe("waiting_response");
@@ -249,7 +281,7 @@ describe("game state machine", () => {
 
     expect(receiverView?.ownHand).toEqual(waitingResponse.players[1].hand);
     expect(receiverView?.players[0]).not.toHaveProperty("hand");
-    expect(receiverView?.players[0].cardCount).toBe(3);
+    expect(receiverView?.players[0].cardCount).toBe(21);
     expect(receiverView?.pendingClaim?.revealedCardType).toBeNull();
     expect(receiverView?.pendingClaim?.revealedCardType).not.toBe(card.type);
 

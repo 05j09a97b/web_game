@@ -3,13 +3,13 @@ import { CARD_TYPES } from "./types";
 import { createDeck, dealCards, shuffleDeck } from "./deck";
 
 describe("createDeck", () => {
-  it("creates four unique cards for every configured type by default", () => {
+  it("creates eight unique cards for every animal type by default", () => {
     const deck = createDeck({ random: () => 0.5 });
 
-    expect(deck).toHaveLength(CARD_TYPES.length * 4);
+    expect(deck).toHaveLength(CARD_TYPES.length * 8);
     expect(new Set(deck.map(({ id }) => id)).size).toBe(deck.length);
     for (const type of CARD_TYPES) {
-      expect(deck.filter((card) => card.type === type)).toHaveLength(4);
+      expect(deck.filter((card) => card.type === type)).toHaveLength(8);
     }
   });
 
@@ -28,7 +28,7 @@ describe("createDeck", () => {
 });
 
 describe("dealCards", () => {
-  it("deals cards round-robin and returns the undealt cards", () => {
+  it("deals the whole deck round-robin, as evenly as possible", () => {
     const deck = [
       { id: "a", type: "bug" as const },
       { id: "b", type: "rat" as const },
@@ -38,16 +38,23 @@ describe("dealCards", () => {
     ];
     const players = [{ id: "p1" }, { id: "p2" }];
 
-    const result = dealCards(players, deck, 2);
+    const result = dealCards(players, deck);
 
-    expect(result.hands.p1.map(({ id }) => id)).toEqual(["a", "c"]);
+    expect(result.hands.p1.map(({ id }) => id)).toEqual(["a", "c", "e"]);
     expect(result.hands.p2.map(({ id }) => id)).toEqual(["b", "d"]);
-    expect(result.remainingDeck.map(({ id }) => id)).toEqual(["e"]);
+    expect(result.remainingDeck).toEqual([]);
+    expect([...result.hands.p1, ...result.hands.p2].map(({ id }) => id).sort()).toEqual(
+      deck.map(({ id }) => id).sort(),
+    );
   });
 
-  it("rejects impossible deals and duplicate players", () => {
+  it("rejects deals without one card per player and duplicate players", () => {
     const oneCard = [{ id: "a", type: "bug" as const }];
-    expect(() => dealCards([{ id: "p1" }, { id: "p2" }], oneCard, 1)).toThrow(RangeError);
-    expect(() => dealCards([{ id: "p1" }, { id: "p1" }], oneCard, 1)).toThrow(RangeError);
+    const twoCards = [
+      { id: "a", type: "bug" as const },
+      { id: "b", type: "rat" as const },
+    ];
+    expect(() => dealCards([{ id: "p1" }, { id: "p2" }], oneCard)).toThrow(RangeError);
+    expect(() => dealCards([{ id: "p1" }, { id: "p1" }], twoCards)).toThrow(RangeError);
   });
 });

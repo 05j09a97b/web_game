@@ -1,7 +1,6 @@
 import { CARD_TYPES, type Card, type PlayerId, type PlayerSetup } from "./types";
 
-export const DEFAULT_COPIES_PER_TYPE = 4;
-export const DEFAULT_CARDS_PER_PLAYER = 4;
+export const DEFAULT_COPIES_PER_TYPE = 8;
 
 export interface CreateDeckOptions {
   copiesPerType?: number;
@@ -50,21 +49,15 @@ export function shuffleDeck(cards: readonly Card[], random: () => number = Math.
 export function dealCards(
   players: readonly Pick<PlayerSetup, "id">[],
   deck: readonly Card[],
-  cardsPerPlayer: number,
 ): DealResult {
   if (players.length === 0) {
     throw new RangeError("At least one player is required to deal cards.");
   }
-  if (!Number.isInteger(cardsPerPlayer) || cardsPerPlayer < 1) {
-    throw new RangeError("cardsPerPlayer must be a positive integer.");
-  }
   if (new Set(players.map((player) => player.id)).size !== players.length) {
     throw new RangeError("Player IDs must be unique.");
   }
-
-  const requiredCards = players.length * cardsPerPlayer;
-  if (requiredCards > deck.length) {
-    throw new RangeError("The deck does not contain enough cards for every player.");
+  if (deck.length < players.length) {
+    throw new RangeError("The deck must contain at least one card for every player.");
   }
 
   const hands = Object.fromEntries(players.map(({ id }) => [id, [] as Card[]])) as Record<
@@ -72,13 +65,13 @@ export function dealCards(
     Card[]
   >;
 
-  for (let cardIndex = 0; cardIndex < requiredCards; cardIndex += 1) {
+  for (let cardIndex = 0; cardIndex < deck.length; cardIndex += 1) {
     const player = players[cardIndex % players.length];
     hands[player.id].push(deck[cardIndex]);
   }
 
   return {
     hands,
-    remainingDeck: deck.slice(requiredCards),
+    remainingDeck: [],
   };
 }

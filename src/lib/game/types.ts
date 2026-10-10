@@ -172,7 +172,7 @@ export interface GameError {
 }
 
 export type GameEvent =
-  | { type: "game_started"; firstPlayerId: PlayerId; dealtCardCount: number }
+  | { type: "game_started"; firstPlayerId: PlayerId; totalCardsDealt: number }
   | { type: "card_selected"; playerId: PlayerId }
   | {
       type: "card_played";
@@ -212,6 +212,5 @@ export interface GameSetupOptions {
 }
 
 export interface StartGameOptions {
-  cardsPerPlayer?: number;
   random?: () => number;
 }
